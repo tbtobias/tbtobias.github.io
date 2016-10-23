@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="format-detection" content="telephone=no" />
+<meta name="author" content="Tobias" />
+
+
+
+<meta name="description" content="之前实现了一个简单的三角形程序，三角形是opengles图元中的一个基本图元，所有的复杂图形都需要经过分解成为一个一个三角形来进行绘制，此篇旨在给出一个立方体的绘制过程，同时由于opengles3.0中并未实现矩阵变换，因此为了更好的观察立方体，也对矩阵的简单变换做了实现。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="opengles3.0--图形进阶，旋转的立方体">
+<meta property="og:url" content="http://yoursite.com/2016/03/18/opengles/opengles3-4/index.html">
+<meta property="og:site_name" content="游 记">
+<meta property="og:description" content="之前实现了一个简单的三角形程序，三角形是opengles图元中的一个基本图元，所有的复杂图形都需要经过分解成为一个一个三角形来进行绘制，此篇旨在给出一个立方体的绘制过程，同时由于opengles3.0中并未实现矩阵变换，因此为了更好的观察立方体，也对矩阵的简单变换做了实现。">
+<meta property="og:image" content="http://7xk4vw.com1.z0.glb.clouddn.com/opengles-vertex.png">
+<meta property="og:updated_time" content="2016-10-23T13:13:33.794Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="opengles3.0--图形进阶，旋转的立方体">
+<meta name="twitter:description" content="之前实现了一个简单的三角形程序，三角形是opengles图元中的一个基本图元，所有的复杂图形都需要经过分解成为一个一个三角形来进行绘制，此篇旨在给出一个立方体的绘制过程，同时由于opengles3.0中并未实现矩阵变换，因此为了更好的观察立方体，也对矩阵的简单变换做了实现。">
+<meta name="twitter:image" content="http://7xk4vw.com1.z0.glb.clouddn.com/opengles-vertex.png">
+
+<link rel="apple-touch-icon" href= "/apple-touch-icon.png">
+
+
+    <link rel="alternate" href="/atom.xml" title="游 记" type="application/atom+xml">
+
+
+
+    <link rel="shortcut icon" href="/favicon.png">
+
+
+
+    <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+
+
+
+    <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+
+
+
+    <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+    <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="/css/style.css">
+
+
+
+<link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+
+
+<title>opengles3.0--图形进阶，旋转的立方体 | 游 记</title>
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+<script>
+    var yiliaConfig = {
+        fancybox: true,
+        animate: true,
+        isHome: false,
+        isPost: true,
+        isArchive: false,
+        isTag: false,
+        isCategory: false,
+        fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+        scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+        search: undefined
+    }
+</script>
+
+
+    <script> yiliaConfig.jquery_ui = [false]; </script>
+
+
+
+    <script> yiliaConfig.rootUrl = "\/";</script>
+
+
+
+
+
+
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.png" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Tobias</a></h1>
+        </hgroup>
+
+        
+
+        
+
+
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        <li>友情链接</li>
+                        
+                        
+                        <li>关于我</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/categories/opengles/">OpenGLes3.0</a></li>
+                        
+                            <li><a href="/categories/hexo笔记/">hexo笔   记</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" href="/#tubiao8926@163.com" title="Email"></a>
+                            
+                                <a class="fa 新浪微博" href="http://weibo.com/flytobias" title="新浪微博"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/camera/">camera</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/">hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/opengles/">opengles</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/themes/">themes</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vs2013/">vs2013</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/入门/">入门</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/初始化/">初始化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片加载/">图片加载</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/矩阵变换/">矩阵变换</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/纹理/">纹理</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/输入/">输入</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/配置/">配置</a></li></ul>
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://hexo.io">Hexo</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://pages.github.com/">GitHub</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="http://moxfive.xyz/">MOxFIVE</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-aboutme">专注于前端</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Tobias</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.png" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Tobias</a></h1>
+            </hgroup>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/categories/opengles/">OpenGLes3.0</a></li>
+                
+                    <li><a href="/categories/hexo笔记/">hexo笔   记</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" target="_blank" href="/#tubiao8926@163.com" title="Email"></a>
+                            
+                                <a class="fa 新浪微博" target="_blank" href="http://weibo.com/flytobias" title="新浪微博"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
+</nav>
+      <div class="body-wrap"><article id="post-opengles/opengles3-4" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/03/18/opengles/opengles3-4/" class="article-date">
+      <time datetime="2016-03-17T16:00:00.000Z" itemprop="datePublished">2016-03-18</time>
+</a>
+
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      opengles3.0--图形进阶，旋转的立方体
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/opengles/">opengles</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/opengles/">opengles</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/矩阵变换/">矩阵变换</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h6 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h6><p>之前实现了一个简单的三角形程序，三角形是opengles图元中的一个基本图元，所有的复杂图形都需要经过分解成为一个一个三角形来进行绘制，此篇旨在给出一个立方体的绘制过程，同时由于opengles3.0中并未实现矩阵变换，因此为了更好的观察立方体，也对矩阵的简单变换做了实现。</p>
+<p>旋转的立方体是三角形的进阶，在三角形的基础上增加了两个基础只是：<br>1：顶点的运用，以及图元的绘制功能熟悉，不在是一个简单的单个三角形，而是组合了12个三角形<br>2：矩阵变换,尝试着变换模型的矩阵，使其旋转</p>
+<p>首先是立方体顶点，我们知道立方体有8个顶点，分成6个面，因此我们给出了，这里给出的8个顶点数据如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">GLfloat afVertices[] =</div><div class="line">&#123;</div><div class="line"></div><div class="line">    1.0f, 1.0f, 1.0f, 1.0f,</div><div class="line">    1.0f, 0.0f, 0.0f, 1.0f,</div><div class="line"></div><div class="line">    -1.0f, 1.0f, 1.0f, 1.0f,</div><div class="line">    0.0f, 1.0f, 0.0f, 1.0f,</div><div class="line"></div><div class="line">    -1.0f, -1.0f, 1.0f, 1.0f,</div><div class="line">    0.0f, 0.0f, 1.0f, 1.0f,</div><div class="line"></div><div class="line">    1.0f, -1.0f, 1.0f, 1.0f,</div><div class="line">    0.0f,0.0f,0.0f,0.0f,</div><div class="line"></div><div class="line">    1.0f, -1.0f, -1.0f, 1.0f,</div><div class="line">    1.0f, 0.0f, 0.0f, 1.0f,</div><div class="line"></div><div class="line">    1.0f, 1.0f, -1.0f, 1.0f,</div><div class="line">    0.0f, 1.0f, 0.0f, 1.0f,</div><div class="line"></div><div class="line">    -1.0f, 1.0f, -1.0f, 1.0f,</div><div class="line">    0.0f, 0.0f, 1.0f, 0.0f,</div><div class="line"></div><div class="line">    -1.0f, -1.0f, -1.0f, 1.0f,</div><div class="line">    0.0f, 0.0f, 0.0f, 1.0f,</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>接下来就是给出三角形的绘制顺序，分别绘制初6个面<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">GLubyte indeice[36] = &#123; 0, 1, 2, 0,2, 3 ,</div><div class="line">                        0, 3, 4, 0, 4, 5,</div><div class="line">                        0, 5, 6, 0, 6, 1,</div><div class="line">                        7, 1, 6, 7, 2, 1,</div><div class="line">                        7, 5, 4, 7, 6, 5, </div><div class="line">                        7, 3, 2, 7, 4, 3&#125;;</div></pre></td></tr></table></figure></p>
+<p>调用绘制接口：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">glDrawElements(GL_TRIANGLES,sizeof(indeice)/sizeof(GLubyte),GL_UNSIGNED_BYTE,indeice);</div></pre></td></tr></table></figure></p>
+<p>第二部就是通过矩阵变换让立方体旋转起来，<br>首先是改写shader，使程序能够输入一个变换矩阵，改变如下：<br>该矩阵为 float[4][4]</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">    GLfloat   m[4][4];</div><div class="line">&#125; Matrix;</div><div class="line"></div><div class="line">Matrix pfIdentity =</div><div class="line">&#123;</div><div class="line">    1.0f, 0.0f, 0.0f, 0.0f,</div><div class="line">    0.0f, 1.0f, 0.0f, 0.0f,</div><div class="line">    0.0f, 0.0f, 1.0f, 0.0f,</div><div class="line">    0.0f, 0.0f, 0.0f, 1.0f,</div><div class="line">&#125;;</div><div class="line"> int i32Location = glGetUniformLocation(uiProgramObject, &quot;myPMVMatrix&quot;);</div><div class="line">glUniformMatrix4fv(i32Location, 1, GL_FALSE,(GLfloat *) pfIdentity.m);</div></pre></td></tr></table></figure>
+<p>在vertexShader中的变化则如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">char* pszVertShader =</div><div class="line">    &quot;#version 300 es \n&quot;</div><div class="line">    &quot;layout(location = 0)attribute vec4  a_position;&quot;</div><div class="line">    &quot;layout(location = 1)attribute vec4  a_color;&quot;</div><div class="line">    &quot;uniform mediump mat4   myPMVMatrix;&quot;</div><div class="line">    &quot;out  vec4 descolor;&quot;</div><div class="line">    &quot;void main(void)&quot;</div><div class="line">    &quot;&#123;&quot;</div><div class="line">    &quot;   gl_Position =myPMVMatrix*a_position ;&quot;</div><div class="line">    &quot;   descolor=a_color;&quot;</div><div class="line">    &quot;&#125;&quot;;</div></pre></td></tr></table></figure></p>
+<p>由于opengles 并未实现矩阵的各个接口，因此这里首先需要实现一下4X4矩阵的各个功能，包括旋转，缩放，偏移等接口，其代码如下，这里的代码实现参考了opengles编程指南的esutil中相关部分，至于深入的学习可能需要3d数学的基础，这里就简单列举一下相关代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div></pre></td><td class="code"><pre><div class="line">void matrixLoadIdentity(Matrix *result)</div><div class="line">&#123;</div><div class="line">    memset(result, 0x0, sizeof(Matrix));</div><div class="line">    result-&gt;m[0][0] = 1.0f;</div><div class="line">    result-&gt;m[1][1] = 1.0f;</div><div class="line">    result-&gt;m[2][2] = 1.0f;</div><div class="line">    result-&gt;m[3][3] = 1.0f;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void matrixMultiply(Matrix *result, Matrix *srcA, Matrix *srcB)</div><div class="line">&#123;</div><div class="line">    Matrix    tmp;</div><div class="line">    int         i;</div><div class="line"></div><div class="line">    for (i = 0; i&lt;4; i++)</div><div class="line">    &#123;</div><div class="line">        tmp.m[i][0] = (srcA-&gt;m[i][0] * srcB-&gt;m[0][0]) +</div><div class="line">            (srcA-&gt;m[i][1] * srcB-&gt;m[1][0]) +</div><div class="line">            (srcA-&gt;m[i][2] * srcB-&gt;m[2][0]) +</div><div class="line">            (srcA-&gt;m[i][3] * srcB-&gt;m[3][0]);</div><div class="line"></div><div class="line">        tmp.m[i][1] = (srcA-&gt;m[i][0] * srcB-&gt;m[0][1]) +</div><div class="line">            (srcA-&gt;m[i][1] * srcB-&gt;m[1][1]) +</div><div class="line">            (srcA-&gt;m[i][2] * srcB-&gt;m[2][1]) +</div><div class="line">            (srcA-&gt;m[i][3] * srcB-&gt;m[3][1]);</div><div class="line"></div><div class="line">        tmp.m[i][2] = (srcA-&gt;m[i][0] * srcB-&gt;m[0][2]) +</div><div class="line">            (srcA-&gt;m[i][1] * srcB-&gt;m[1][2]) +</div><div class="line">            (srcA-&gt;m[i][2] * srcB-&gt;m[2][2]) +</div><div class="line">            (srcA-&gt;m[i][3] * srcB-&gt;m[3][2]);</div><div class="line"></div><div class="line">        tmp.m[i][3] = (srcA-&gt;m[i][0] * srcB-&gt;m[0][3]) +</div><div class="line">            (srcA-&gt;m[i][1] * srcB-&gt;m[1][3]) +</div><div class="line">            (srcA-&gt;m[i][2] * srcB-&gt;m[2][3]) +</div><div class="line">            (srcA-&gt;m[i][3] * srcB-&gt;m[3][3]);</div><div class="line">    &#125;</div><div class="line">    memcpy(result, &amp;tmp, sizeof(Matrix));</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">void matrixScale(Matrix *result, GLfloat sx, GLfloat sy, GLfloat sz)</div><div class="line">&#123;</div><div class="line">    result-&gt;m[0][0] *= sx;</div><div class="line">    result-&gt;m[0][1] *= sx;</div><div class="line">    result-&gt;m[0][2] *= sx;</div><div class="line">    result-&gt;m[0][3] *= sx;</div><div class="line"></div><div class="line">    result-&gt;m[1][0] *= sy;</div><div class="line">    result-&gt;m[1][1] *= sy;</div><div class="line">    result-&gt;m[1][2] *= sy;</div><div class="line">    result-&gt;m[1][3] *= sy;</div><div class="line"></div><div class="line">    result-&gt;m[2][0] *= sz;</div><div class="line">    result-&gt;m[2][1] *= sz;</div><div class="line">    result-&gt;m[2][2] *= sz;</div><div class="line">    result-&gt;m[2][3] *= sz;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void matrixTranslate(Matrix *result, GLfloat tx, GLfloat ty, GLfloat tz)</div><div class="line">&#123;</div><div class="line">    result-&gt;m[3][0] += (result-&gt;m[0][0] * tx + result-&gt;m[1][0] * ty + result-&gt;m[2][0] * tz);</div><div class="line">    result-&gt;m[3][1] += (result-&gt;m[0][1] * tx + result-&gt;m[1][1] * ty + result-&gt;m[2][1] * tz);</div><div class="line">    result-&gt;m[3][2] += (result-&gt;m[0][2] * tx + result-&gt;m[1][2] * ty + result-&gt;m[2][2] * tz);</div><div class="line">    result-&gt;m[3][3] += (result-&gt;m[0][3] * tx + result-&gt;m[1][3] * ty + result-&gt;m[2][3] * tz);</div><div class="line">&#125;</div><div class="line"></div><div class="line">void matrixRotate(Matrix *result, GLfloat angle, GLfloat x, GLfloat y, GLfloat z)</div><div class="line">&#123;</div><div class="line">    GLfloat sinAngle, cosAngle;</div><div class="line">    GLfloat mag = sqrtf(x * x + y * y + z * z);</div><div class="line"></div><div class="line">    sinAngle = sinf(angle * PI / 180.0f);</div><div class="line">    cosAngle = cosf(angle * PI / 180.0f);</div><div class="line">    if (mag &gt; 0.0f)</div><div class="line">    &#123;</div><div class="line">        GLfloat xx, yy, zz, xy, yz, zx, xs, ys, zs;</div><div class="line">        GLfloat oneMinusCos;</div><div class="line">        Matrix rotMat;</div><div class="line"></div><div class="line">        x /= mag;</div><div class="line">        y /= mag;</div><div class="line">        z /= mag;</div><div class="line"></div><div class="line">        xx = x * x;</div><div class="line">        yy = y * y;</div><div class="line">        zz = z * z;</div><div class="line">        xy = x * y;</div><div class="line">        yz = y * z;</div><div class="line">        zx = z * x;</div><div class="line">        xs = x * sinAngle;</div><div class="line">        ys = y * sinAngle;</div><div class="line">        zs = z * sinAngle;</div><div class="line">        oneMinusCos = 1.0f - cosAngle;</div><div class="line"></div><div class="line">        rotMat.m[0][0] = (oneMinusCos * xx) + cosAngle;</div><div class="line">        rotMat.m[0][1] = (oneMinusCos * xy) - zs;</div><div class="line">        rotMat.m[0][2] = (oneMinusCos * zx) + ys;</div><div class="line">        rotMat.m[0][3] = 0.0F;</div><div class="line"></div><div class="line">        rotMat.m[1][0] = (oneMinusCos * xy) + zs;</div><div class="line">        rotMat.m[1][1] = (oneMinusCos * yy) + cosAngle;</div><div class="line">        rotMat.m[1][2] = (oneMinusCos * yz) - xs;</div><div class="line">        rotMat.m[1][3] = 0.0F;</div><div class="line"></div><div class="line">        rotMat.m[2][0] = (oneMinusCos * zx) - ys;</div><div class="line">        rotMat.m[2][1] = (oneMinusCos * yz) + xs;</div><div class="line">        rotMat.m[2][2] = (oneMinusCos * zz) + cosAngle;</div><div class="line">        rotMat.m[2][3] = 0.0F;</div><div class="line"></div><div class="line">        rotMat.m[3][0] = 0.0F;</div><div class="line">        rotMat.m[3][1] = 0.0F;</div><div class="line">        rotMat.m[3][2] = 0.0F;</div><div class="line">        rotMat.m[3][3] = 1.0F;</div><div class="line"></div><div class="line">        matrixMultiply(result, &amp;rotMat, result);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void matrixFrustum(Matrix *result, float left, float right, float bottom, float top, float nearZ, float farZ)</div><div class="line">&#123;</div><div class="line">    float       deltaX = right - left;</div><div class="line">    float       deltaY = top - bottom;</div><div class="line">    float       deltaZ = farZ - nearZ;</div><div class="line">    Matrix    frust;</div><div class="line"></div><div class="line">    if ((nearZ &lt;= 0.0f) || (farZ &lt;= 0.0f) ||</div><div class="line">        (deltaX &lt;= 0.0f) || (deltaY &lt;= 0.0f) || (deltaZ &lt;= 0.0f))</div><div class="line">        return;</div><div class="line"></div><div class="line">    frust.m[0][0] = 2.0f * nearZ / deltaX;</div><div class="line">    frust.m[0][1] = frust.m[0][2] = frust.m[0][3] = 0.0f;</div><div class="line"></div><div class="line">    frust.m[1][1] = 2.0f * nearZ / deltaY;</div><div class="line">    frust.m[1][0] = frust.m[1][2] = frust.m[1][3] = 0.0f;</div><div class="line"></div><div class="line">    frust.m[2][0] = (right + left) / deltaX;</div><div class="line">    frust.m[2][1] = (top + bottom) / deltaY;</div><div class="line">    frust.m[2][2] = -(nearZ + farZ) / deltaZ;</div><div class="line">    frust.m[2][3] = -1.0f;</div><div class="line"></div><div class="line">    frust.m[3][2] = -2.0f * nearZ * farZ / deltaZ;</div><div class="line">    frust.m[3][0] = frust.m[3][1] = frust.m[3][3] = 0.0f;</div><div class="line"></div><div class="line">    matrixMultiply(result, &amp;frust, result);</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">void matrixPerspective(Matrix *result, float fovy, float aspect, float nearZ, float farZ)</div><div class="line">&#123;</div><div class="line">    GLfloat frustumW, frustumH;</div><div class="line"></div><div class="line">    frustumH = tanf(fovy / 360.0f * PI) * nearZ;</div><div class="line">    frustumW = frustumH * aspect;</div><div class="line"></div><div class="line">    matrixFrustum(result, -frustumW, frustumW, -frustumH, frustumH, nearZ, farZ);</div><div class="line">&#125;</div><div class="line"></div><div class="line">void matrixOrtho(Matrix *result, float left, float right, float bottom, float top, float nearZ, float farZ)</div><div class="line">&#123;</div><div class="line">    float       deltaX = right - left;</div><div class="line">    float       deltaY = top - bottom;</div><div class="line">    float       deltaZ = farZ - nearZ;</div><div class="line">    Matrix    ortho;</div><div class="line"></div><div class="line">    if ((deltaX == 0.0f) || (deltaY == 0.0f) || (deltaZ == 0.0f))</div><div class="line">        return;</div><div class="line"></div><div class="line">    matrixLoadIdentity(&amp;ortho);</div><div class="line">    ortho.m[0][0] = 2.0f / deltaX;</div><div class="line">    ortho.m[3][0] = -(right + left) / deltaX;</div><div class="line">    ortho.m[1][1] = 2.0f / deltaY;</div><div class="line">    ortho.m[3][1] = -(top + bottom) / deltaY;</div><div class="line">    ortho.m[2][2] = -2.0f / deltaZ;</div><div class="line">    ortho.m[3][2] = -(nearZ + farZ) / deltaZ;</div><div class="line"></div><div class="line">    matrixMultiply(result, &amp;ortho, result);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="附录代码"><a href="#附录代码" class="headerlink" title="附录代码"></a>附录代码</h4><h6 id="headers-h"><a href="#headers-h" class="headerlink" title="headers.h"></a>headers.h</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">#ifndef HEADER_H</div><div class="line">    #define HEADER_H</div><div class="line">    #include &lt;stdio.h&gt;</div><div class="line">    #include &lt;windows.h&gt;</div><div class="line">    #include &lt;tchar.h&gt;</div><div class="line"></div><div class="line">    #include &quot;EGL/egl.h&quot;</div><div class="line">    #include &lt;GLES3/gl3.h&gt;</div><div class="line">#endif</div></pre></td></tr></table></figure>
+<p>cell_win_app.h文件内容与前面一样保持不变</p>
+<p>egl_win_app.h 同样与前面一样保持不变</p>
+<p>shader_loader.h也一样保持不变</p>
+<h6 id="buffer-h"><a href="#buffer-h" class="headerlink" title="buffer.h"></a>buffer.h</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line">#include &quot;headers.h&quot;</div><div class="line"></div><div class="line">int bindBuffer(GLuint *ui32Vbo)</div><div class="line">&#123;</div><div class="line">    //Interleaved vertex data</div><div class="line">    GLfloat afVertices[] =</div><div class="line">    &#123;</div><div class="line"></div><div class="line">        1.0f, 1.0f, 1.0f, 1.0f,</div><div class="line">        1.0f, 0.0f, 0.0f, 1.0f,</div><div class="line"></div><div class="line">        -1.0f, 1.0f, 1.0f, 1.0f,</div><div class="line">        0.0f, 1.0f, 0.0f, 1.0f,</div><div class="line"></div><div class="line">        -1.0f, -1.0f, 1.0f, 1.0f,</div><div class="line">        0.0f, 0.0f, 1.0f, 1.0f,</div><div class="line"></div><div class="line">        1.0f, -1.0f, 1.0f, 1.0f,</div><div class="line">        0.0f,0.0f,0.0f,0.0f,</div><div class="line"></div><div class="line">        1.0f, -1.0f, -1.0f, 1.0f,</div><div class="line">        1.0f, 0.0f, 0.0f, 1.0f,</div><div class="line"></div><div class="line">        1.0f, 1.0f, -1.0f, 1.0f,</div><div class="line">        0.0f, 1.0f, 0.0f, 1.0f,</div><div class="line"></div><div class="line">        -1.0f, 1.0f, -1.0f, 1.0f,</div><div class="line">        0.0f, 0.0f, 1.0f, 0.0f,</div><div class="line"></div><div class="line">        -1.0f, -1.0f, -1.0f, 1.0f,</div><div class="line">        0.0f, 0.0f, 0.0f, 1.0f,</div><div class="line">    &#125;;</div><div class="line"></div><div class="line">    //genertrate the vertex buffer object(VBO)</div><div class="line"></div><div class="line">    glGenBuffers(0, ui32Vbo);</div><div class="line"></div><div class="line">    //bind the VBO so we can fill it width data</div><div class="line">    glBindBuffer(GL_ARRAY_BUFFER, *ui32Vbo);</div><div class="line"></div><div class="line">    //Set the buffer&apos;s data</div><div class="line">    unsigned int uiSize = 8 * (sizeof(GLfloat)* 8);</div><div class="line">    glBufferData(GL_ARRAY_BUFFER, uiSize, afVertices, GL_STATIC_DRAW);</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h6 id="matrix-h"><a href="#matrix-h" class="headerlink" title="matrix.h"></a>matrix.h</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div><div class="line">182</div><div class="line">183</div><div class="line">184</div><div class="line">185</div><div class="line">186</div><div class="line">187</div></pre></td><td class="code"><pre><div class="line">#include &quot;headers.h&quot;</div><div class="line">#include &lt;math.h&gt;</div><div class="line"></div><div class="line">#define PI 3.1415926535897932384626433832795f</div><div class="line"></div><div class="line">typedef struct</div><div class="line">&#123;</div><div class="line">    GLfloat   m[4][4];</div><div class="line">&#125; Matrix;</div><div class="line"></div><div class="line">void matrixLoadIdentity(Matrix *result)</div><div class="line">&#123;</div><div class="line">    memset(result, 0x0, sizeof(Matrix));</div><div class="line">    result-&gt;m[0][0] = 1.0f;</div><div class="line">    result-&gt;m[1][1] = 1.0f;</div><div class="line">    result-&gt;m[2][2] = 1.0f;</div><div class="line">    result-&gt;m[3][3] = 1.0f;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void matrixMultiply(Matrix *result, Matrix *srcA, Matrix *srcB)</div><div class="line">&#123;</div><div class="line">    Matrix    tmp;</div><div class="line">    int         i;</div><div class="line"></div><div class="line">    for (i = 0; i&lt;4; i++)</div><div class="line">    &#123;</div><div class="line">        tmp.m[i][0] = (srcA-&gt;m[i][0] * srcB-&gt;m[0][0]) +</div><div class="line">            (srcA-&gt;m[i][1] * srcB-&gt;m[1][0]) +</div><div class="line">            (srcA-&gt;m[i][2] * srcB-&gt;m[2][0]) +</div><div class="line">            (srcA-&gt;m[i][3] * srcB-&gt;m[3][0]);</div><div class="line"></div><div class="line">        tmp.m[i][1] = (srcA-&gt;m[i][0] * srcB-&gt;m[0][1]) +</div><div class="line">            (srcA-&gt;m[i][1] * srcB-&gt;m[1][1]) +</div><div class="line">            (srcA-&gt;m[i][2] * srcB-&gt;m[2][1]) +</div><div class="line">            (srcA-&gt;m[i][3] * srcB-&gt;m[3][1]);</div><div class="line"></div><div class="line">        tmp.m[i][2] = (srcA-&gt;m[i][0] * srcB-&gt;m[0][2]) +</div><div class="line">            (srcA-&gt;m[i][1] * srcB-&gt;m[1][2]) +</div><div class="line">            (srcA-&gt;m[i][2] * srcB-&gt;m[2][2]) +</div><div class="line">            (srcA-&gt;m[i][3] * srcB-&gt;m[3][2]);</div><div class="line"></div><div class="line">        tmp.m[i][3] = (srcA-&gt;m[i][0] * srcB-&gt;m[0][3]) +</div><div class="line">            (srcA-&gt;m[i][1] * srcB-&gt;m[1][3]) +</div><div class="line">            (srcA-&gt;m[i][2] * srcB-&gt;m[2][3]) +</div><div class="line">            (srcA-&gt;m[i][3] * srcB-&gt;m[3][3]);</div><div class="line">    &#125;</div><div class="line">    memcpy(result, &amp;tmp, sizeof(Matrix));</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">void matrixScale(Matrix *result, GLfloat sx, GLfloat sy, GLfloat sz)</div><div class="line">&#123;</div><div class="line">    result-&gt;m[0][0] *= sx;</div><div class="line">    result-&gt;m[0][1] *= sx;</div><div class="line">    result-&gt;m[0][2] *= sx;</div><div class="line">    result-&gt;m[0][3] *= sx;</div><div class="line"></div><div class="line">    result-&gt;m[1][0] *= sy;</div><div class="line">    result-&gt;m[1][1] *= sy;</div><div class="line">    result-&gt;m[1][2] *= sy;</div><div class="line">    result-&gt;m[1][3] *= sy;</div><div class="line"></div><div class="line">    result-&gt;m[2][0] *= sz;</div><div class="line">    result-&gt;m[2][1] *= sz;</div><div class="line">    result-&gt;m[2][2] *= sz;</div><div class="line">    result-&gt;m[2][3] *= sz;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void matrixTranslate(Matrix *result, GLfloat tx, GLfloat ty, GLfloat tz)</div><div class="line">&#123;</div><div class="line">    result-&gt;m[3][0] += (result-&gt;m[0][0] * tx + result-&gt;m[1][0] * ty + result-&gt;m[2][0] * tz);</div><div class="line">    result-&gt;m[3][1] += (result-&gt;m[0][1] * tx + result-&gt;m[1][1] * ty + result-&gt;m[2][1] * tz);</div><div class="line">    result-&gt;m[3][2] += (result-&gt;m[0][2] * tx + result-&gt;m[1][2] * ty + result-&gt;m[2][2] * tz);</div><div class="line">    result-&gt;m[3][3] += (result-&gt;m[0][3] * tx + result-&gt;m[1][3] * ty + result-&gt;m[2][3] * tz);</div><div class="line">&#125;</div><div class="line"></div><div class="line">void matrixRotate(Matrix *result, GLfloat angle, GLfloat x, GLfloat y, GLfloat z)</div><div class="line">&#123;</div><div class="line">    GLfloat sinAngle, cosAngle;</div><div class="line">    GLfloat mag = sqrtf(x * x + y * y + z * z);</div><div class="line"></div><div class="line">    sinAngle = sinf(angle * PI / 180.0f);</div><div class="line">    cosAngle = cosf(angle * PI / 180.0f);</div><div class="line">    if (mag &gt; 0.0f)</div><div class="line">    &#123;</div><div class="line">        GLfloat xx, yy, zz, xy, yz, zx, xs, ys, zs;</div><div class="line">        GLfloat oneMinusCos;</div><div class="line">        Matrix rotMat;</div><div class="line"></div><div class="line">        x /= mag;</div><div class="line">        y /= mag;</div><div class="line">        z /= mag;</div><div class="line"></div><div class="line">        xx = x * x;</div><div class="line">        yy = y * y;</div><div class="line">        zz = z * z;</div><div class="line">        xy = x * y;</div><div class="line">        yz = y * z;</div><div class="line">        zx = z * x;</div><div class="line">        xs = x * sinAngle;</div><div class="line">        ys = y * sinAngle;</div><div class="line">        zs = z * sinAngle;</div><div class="line">        oneMinusCos = 1.0f - cosAngle;</div><div class="line"></div><div class="line">        rotMat.m[0][0] = (oneMinusCos * xx) + cosAngle;</div><div class="line">        rotMat.m[0][1] = (oneMinusCos * xy) - zs;</div><div class="line">        rotMat.m[0][2] = (oneMinusCos * zx) + ys;</div><div class="line">        rotMat.m[0][3] = 0.0F;</div><div class="line"></div><div class="line">        rotMat.m[1][0] = (oneMinusCos * xy) + zs;</div><div class="line">        rotMat.m[1][1] = (oneMinusCos * yy) + cosAngle;</div><div class="line">        rotMat.m[1][2] = (oneMinusCos * yz) - xs;</div><div class="line">        rotMat.m[1][3] = 0.0F;</div><div class="line"></div><div class="line">        rotMat.m[2][0] = (oneMinusCos * zx) - ys;</div><div class="line">        rotMat.m[2][1] = (oneMinusCos * yz) + xs;</div><div class="line">        rotMat.m[2][2] = (oneMinusCos * zz) + cosAngle;</div><div class="line">        rotMat.m[2][3] = 0.0F;</div><div class="line"></div><div class="line">        rotMat.m[3][0] = 0.0F;</div><div class="line">        rotMat.m[3][1] = 0.0F;</div><div class="line">        rotMat.m[3][2] = 0.0F;</div><div class="line">        rotMat.m[3][3] = 1.0F;</div><div class="line"></div><div class="line">        matrixMultiply(result, &amp;rotMat, result);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void matrixFrustum(Matrix *result, float left, float right, float bottom, float top, float nearZ, float farZ)</div><div class="line">&#123;</div><div class="line">    float       deltaX = right - left;</div><div class="line">    float       deltaY = top - bottom;</div><div class="line">    float       deltaZ = farZ - nearZ;</div><div class="line">    Matrix    frust;</div><div class="line"></div><div class="line">    if ((nearZ &lt;= 0.0f) || (farZ &lt;= 0.0f) ||</div><div class="line">        (deltaX &lt;= 0.0f) || (deltaY &lt;= 0.0f) || (deltaZ &lt;= 0.0f))</div><div class="line">        return;</div><div class="line"></div><div class="line">    frust.m[0][0] = 2.0f * nearZ / deltaX;</div><div class="line">    frust.m[0][1] = frust.m[0][2] = frust.m[0][3] = 0.0f;</div><div class="line"></div><div class="line">    frust.m[1][1] = 2.0f * nearZ / deltaY;</div><div class="line">    frust.m[1][0] = frust.m[1][2] = frust.m[1][3] = 0.0f;</div><div class="line"></div><div class="line">    frust.m[2][0] = (right + left) / deltaX;</div><div class="line">    frust.m[2][1] = (top + bottom) / deltaY;</div><div class="line">    frust.m[2][2] = -(nearZ + farZ) / deltaZ;</div><div class="line">    frust.m[2][3] = -1.0f;</div><div class="line"></div><div class="line">    frust.m[3][2] = -2.0f * nearZ * farZ / deltaZ;</div><div class="line">    frust.m[3][0] = frust.m[3][1] = frust.m[3][3] = 0.0f;</div><div class="line"></div><div class="line">    matrixMultiply(result, &amp;frust, result);</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">void matrixPerspective(Matrix *result, float fovy, float aspect, float nearZ, float farZ)</div><div class="line">&#123;</div><div class="line">    GLfloat frustumW, frustumH;</div><div class="line"></div><div class="line">    frustumH = tanf(fovy / 360.0f * PI) * nearZ;</div><div class="line">    frustumW = frustumH * aspect;</div><div class="line"></div><div class="line">    matrixFrustum(result, -frustumW, frustumW, -frustumH, frustumH, nearZ, farZ);</div><div class="line">&#125;</div><div class="line"></div><div class="line">void matrixOrtho(Matrix *result, float left, float right, float bottom, float top, float nearZ, float farZ)</div><div class="line">&#123;</div><div class="line">    float       deltaX = right - left;</div><div class="line">    float       deltaY = top - bottom;</div><div class="line">    float       deltaZ = farZ - nearZ;</div><div class="line">    Matrix    ortho;</div><div class="line"></div><div class="line">    if ((deltaX == 0.0f) || (deltaY == 0.0f) || (deltaZ == 0.0f))</div><div class="line">        return;</div><div class="line"></div><div class="line">    matrixLoadIdentity(&amp;ortho);</div><div class="line">    ortho.m[0][0] = 2.0f / deltaX;</div><div class="line">    ortho.m[3][0] = -(right + left) / deltaX;</div><div class="line">    ortho.m[1][1] = 2.0f / deltaY;</div><div class="line">    ortho.m[3][1] = -(top + bottom) / deltaY;</div><div class="line">    ortho.m[2][2] = -2.0f / deltaZ;</div><div class="line">    ortho.m[3][2] = -(nearZ + farZ) / deltaZ;</div><div class="line"></div><div class="line">    matrixMultiply(result, &amp;ortho, result);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h6 id="main-cpp"><a href="#main-cpp" class="headerlink" title="main.cpp"></a>main.cpp</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div></pre></td><td class="code"><pre><div class="line">#include &quot;cell_win_app.h&quot;</div><div class="line"></div><div class="line">#include &quot;egl_win_app.h&quot;</div><div class="line"></div><div class="line">#include &quot;shader_loader.h&quot;</div><div class="line"></div><div class="line">#include &quot;buffer.h&quot;</div><div class="line">#include &quot;matrix.h&quot;</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE  hPrevInstance, LPSTR lpCmdLine, int nCmdShow)</div><div class="line">&#123;</div><div class="line">    CellWinApp cellWinApp;</div><div class="line">    HWND hWnd = cellWinApp.CreateWnd(TEXT(&quot;WinMain&quot;), TEXT(&quot;主窗口&quot;));</div><div class="line">    cellWinApp.DisplayWnd(hWnd);</div><div class="line">    //EGL variables</div><div class="line">    EGLConfig eglConfig = 0;</div><div class="line">    EGLContext eglContext = 0;</div><div class="line">    EGLDisplay eglDisplay = 0;</div><div class="line">    EGLSurface eglSurface = 0;</div><div class="line">    EGLNativeWindowType eglWindow = 0;</div><div class="line"></div><div class="line">    // Fragment and vertex shaders code</div><div class="line">    // Fragment and vertex shaders code</div><div class="line">    char* pszFragShader =</div><div class="line">        &quot;#version 300 es \n&quot;</div><div class="line">        &quot;in  vec4 descolor;&quot;</div><div class="line">        &quot;void main (void)&quot;</div><div class="line">        &quot;&#123;&quot;</div><div class="line">        &quot;    gl_FragColor = descolor;&quot;</div><div class="line">        &quot;&#125;&quot;;</div><div class="line"></div><div class="line">    char* pszVertShader =</div><div class="line">        &quot;#version 300 es \n&quot;</div><div class="line">        &quot;layout(location = 0)attribute vec4  a_position;&quot;</div><div class="line">        &quot;layout(location = 1)attribute vec4  a_color;&quot;</div><div class="line">        &quot;uniform mediump mat4   myPMVMatrix;&quot;</div><div class="line">        &quot;out  vec4 descolor;&quot;</div><div class="line">        &quot;void main(void)&quot;</div><div class="line">        &quot;&#123;&quot;</div><div class="line">        &quot;   gl_Position =myPMVMatrix*a_position ;&quot;</div><div class="line">        &quot;   descolor=a_color;&quot;</div><div class="line">        &quot;&#125;&quot;;</div><div class="line"></div><div class="line"></div><div class="line">    Matrix pfIdentity =</div><div class="line">    &#123;</div><div class="line">        1.0f, 0.0f, 0.0f, 0.0f,</div><div class="line">        0.0f, 1.0f, 0.0f, 0.0f,</div><div class="line">        0.0f, 0.0f, 1.0f, 0.0f,</div><div class="line">        0.0f, 0.0f, 0.0f, 1.0f,</div><div class="line">    &#125;;</div><div class="line">    eglWindow = hWnd;</div><div class="line"></div><div class="line">    HDC hDC = 0;</div><div class="line">    hDC = GetDC(hWnd);</div><div class="line">    if (!hDC)</div><div class="line">    &#123;</div><div class="line">        MessageBox(0, _T(&quot;Failed to create the device context&quot;), _T(&quot;Error&quot;), MB_OK | MB_ICONEXCLAMATION);</div><div class="line">        goto cleanup;</div><div class="line">    &#125;</div><div class="line">    if (!initializeWindow(eglWindow, eglDisplay, eglSurface))</div><div class="line">    &#123;</div><div class="line">        goto cleanup;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    //Draw something  with OpenGL ES</div><div class="line">    GLuint uiFragShader, uiVertShader;</div><div class="line">    GLuint uiProgramObject;</div><div class="line"></div><div class="line">    if (!loaderShader(eglWindow, pszFragShader, pszVertShader, uiFragShader, uiVertShader))</div><div class="line">    &#123;</div><div class="line">        goto cleanup;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (!createShaderProgram(eglWindow, uiProgramObject, uiFragShader, uiVertShader))</div><div class="line">    &#123;</div><div class="line">        goto cleanup;</div><div class="line">    &#125;</div><div class="line">    //Actually the create program</div><div class="line">    glUseProgram(uiProgramObject);</div><div class="line"></div><div class="line">    //Set the color </div><div class="line">    //the clours are passed per channel(red,green,blue,alpha) as float values from 0,1 to 1.0</div><div class="line">    glClearColor(0.6f, 0.8f, 1.0f, 1.0f);</div><div class="line"></div><div class="line">    //We&apos;re going to draw triangle to the screen so create a vertex buffer object for our triangle</div><div class="line">    GLuint ui32Vbo;</div><div class="line"></div><div class="line">    bindBuffer(&amp;ui32Vbo);</div><div class="line">    GLubyte indeice[36] = &#123; 0, 1, 2, 0, 2, 3 , 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 1, 7, 1, 6, 7, 2, 1, 7, 5, 4, 7, 6, 5, 7, 3, 2, 7, 4, 3&#125;;</div><div class="line">    //bind the custon vertsx attribute &quot;my vertex&quot; to local Vertex_array</div><div class="line">    glBindAttribLocation(uiProgramObject, 0, &quot;a_position&quot;);</div><div class="line">    glBindAttribLocation(uiProgramObject, 1, &quot;a_color&quot;);</div><div class="line">    matrixScale(&amp;pfIdentity, 0.5, 0.5, 0.5);</div><div class="line">    //matrixTranslate(&amp;pfIdentity, 0.5f, 0.5f, 0.5f);</div><div class="line">    static float rotation = 0;</div><div class="line">    //Draws triangle for 800 frames</div><div class="line">    for (int i = 0; i &lt; 1600; i++)</div><div class="line">    &#123;</div><div class="line">        if (g_bDemoDone) break;</div><div class="line"></div><div class="line">        //Clears the color buffer</div><div class="line">        glClear(GL_COLOR_BUFFER_BIT);</div><div class="line">        if (!TestEGLError(hWnd, &quot;glClear&quot;))</div><div class="line">        &#123;</div><div class="line">            goto cleanup;</div><div class="line">        &#125;</div><div class="line">        int i32Location = glGetUniformLocation(uiProgramObject, &quot;myPMVMatrix&quot;);</div><div class="line"></div><div class="line">        //Then passes the matrix to that variable</div><div class="line"></div><div class="line">        matrixRotate(&amp;pfIdentity, 0.1,1.0f,1.0f,1.0f);</div><div class="line"></div><div class="line">        glUniformMatrix4fv(i32Location, 1, GL_FALSE,(GLfloat *) pfIdentity.m);</div><div class="line"></div><div class="line">        glEnableVertexAttribArray(0);</div><div class="line">        glEnableVertexAttribArray(1);</div><div class="line">        //Setsthe vertex data to this attribute index</div><div class="line">        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), 0);</div><div class="line">        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLubyte *)(4 * sizeof(GLfloat)));</div><div class="line">        glDrawElements(GL_TRIANGLES,sizeof(indeice)/sizeof(GLubyte),GL_UNSIGNED_BYTE,indeice);</div><div class="line">        if (!TestEGLError(hWnd, &quot;glDrawArrays&quot;))</div><div class="line">        &#123;</div><div class="line">            goto cleanup;</div><div class="line">        &#125;</div><div class="line"></div><div class="line"></div><div class="line">        eglSwapBuffers(eglDisplay, eglSurface);</div><div class="line">        if (!TestEGLError(hWnd, &quot;eglSwapBuffers&quot;))</div><div class="line">        &#123;</div><div class="line">            goto cleanup;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        MSG msg;</div><div class="line">        PeekMessage(&amp;msg, hWnd, NULL, NULL, PM_REMOVE);</div><div class="line">        TranslateMessage(&amp;msg);</div><div class="line">        DispatchMessage(&amp;msg);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // free the OpenGL handlers for the program and the 2 shaders</div><div class="line">    glDeleteProgram(uiProgramObject);</div><div class="line">    glDeleteShader(uiFragShader);</div><div class="line">    glDeleteShader(uiVertShader);</div><div class="line"></div><div class="line">    //Delete the VBO as it is no longer needed</div><div class="line">    glDeleteBuffers(0, &amp;ui32Vbo);</div><div class="line"></div><div class="line">cleanup:</div><div class="line">    eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);</div><div class="line">    eglTerminate(eglDisplay);</div><div class="line"></div><div class="line">    // Release the device context</div><div class="line">    if (hDC) ReleaseDC(hWnd, hDC);</div><div class="line">    // Destroy the eglWindow</div><div class="line">    if (hWnd) DestroyWindow(hWnd);</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h4><p><img src="http://7xk4vw.com1.z0.glb.clouddn.com/opengles-vertex.png" alt=""></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2016/03/18/opengles/opengles3-4/">opengles3.0--图形进阶，旋转的立方体</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">Tobias</a></p>
+        <p><span>发布时间:</span>2016-03-18, 00:00:00</p>
+        <p><span>最后更新:</span>2016-10-23, 21:13:33</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2016/03/18/opengles/opengles3-4/" title="opengles3.0--图形进阶，旋转的立方体">http://yoursite.com/2016/03/18/opengles/opengles3-4/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://yoursite.com/2016/03/18/opengles/opengles3-4/　　作者: Tobias" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+            <div id="article-nav-newer" class="article-nav-title">
+                <a href="/2016/04/06/opengles/opengles3-5/">
+                    opengles3.0--旋转矩阵，摄像机
+                </a>
+            </div>
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/03/10/opengles/opengles3-3/">
+                    Opengles3.0--helloTriangle,一开新的开始
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+        <strong class="toc-title">文章目录</strong>
+        
+            <ol class="toc"><li class="toc-item toc-level-6"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#附录代码"><span class="toc-number"></span> <span class="toc-text">附录代码</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#headers-h"><span class="toc-number">1.</span> <span class="toc-text">headers.h</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#buffer-h"><span class="toc-number">2.</span> <span class="toc-text">buffer.h</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#matrix-h"><span class="toc-number">3.</span> <span class="toc-text">matrix.h</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#main-cpp"><span class="toc-number">4.</span> <span class="toc-text">main.cpp</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#结果"><span class="toc-number"></span> <span class="toc-text">结果</span></a>
+        
+    </div>
+    <style>
+        .left-col .switch-btn,
+        .left-col .switch-area {
+            display: none;
+        }
+        .toc-level-3 i,
+        .toc-level-3 ol {
+            display: none !important;
+        }
+    </style>
+
+    <input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
+
+    <script>
+        yiliaConfig.toc = ["隐藏目录", "显示目录", !!"false"];
+    </script>
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"opengles3.0--图形进阶，旋转的立方体　| 游 记　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/2016/04/06/opengles/opengles3-5/" title="上一篇: opengles3.0--旋转矩阵，摄像机">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/03/10/opengles/opengles3-3/" title="下一篇: Opengles3.0--helloTriangle,一开新的开始">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2016/05/10/hexo/hexo-change-themes/">Hexo—更换主题</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/10/hexo/hexo-start/">Hexo—静态博客搭建</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/10/opengles/opengles3-6/">Opengles3.0--opengles的vs2013环境配置与安装</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/04/06/opengles/opengles3-5/">opengles3.0--旋转矩阵，摄像机</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/03/18/opengles/opengles3-4/">opengles3.0--图形进阶，旋转的立方体</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/03/10/opengles/opengles3-3/">Opengles3.0--helloTriangle,一开新的开始</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/02/15/opengles/opengles3-2/">Opengles3.0--opengles的vs2013环境配置与安装</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/02/15/opengles/opengles3-1/">Opengles3.0--opengles的vs2013环境配置与安装</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2016 Tobias
+            </div>
+            <div class="footer-right">
+            <p>Email: tubiao8926@gmail.com</p>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" title="本站到访数"><i class="fa fa-user" aria-hidden="true"></i><span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>| </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit"  title="本页阅读量"><i class="fa fa-eye animated infinite pulse" aria-hidden="true"></i><span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var iPad = window.navigator.userAgent.indexOf('iPad');
+            if (iPad > -1 || $(".left-col").css("display") === "none") {
+                var bgColorList = ["#9db3f4", "#414141", "#e5a859", "#f5dfc6", "#c084a0", "#847e72", "#cd8390", "#996731"];
+                var bgColor = Math.ceil(Math.random() * (bgColorList.length - 1));
+                $("body").css({"background-color": bgColorList[bgColor], "background-size": "cover"});
+            }
+            else {
+                var backgroundnum = 5;
+                var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+                $("body").css({"background": backgroundimg, "background-attachment": "fixed", "background-size": "cover"});
+            }
+        })
+    </script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" onclick="load$hide();" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    // Open in New Window
+    
+        var oOpenInNew = {
+            
+            
+            
+            
+            
+            
+             archives: ".archive-article-title", 
+             miniArchives: "a.post-list-link", 
+            
+             friends: "#js-friends a", 
+             socail: ".social a" 
+        }
+        for (var x in oOpenInNew) {
+            $(oOpenInNew[x]).attr("target", "_blank");
+        }
+    
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>

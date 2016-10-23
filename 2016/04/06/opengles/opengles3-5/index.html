@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="format-detection" content="telephone=no" />
+<meta name="author" content="Tobias" />
+
+
+
+<meta name="description" content="这两天主要是学习了如何构建一个opengles的Camera,之前做过了矩阵变换，其实从camera的角度出发，物体的旋转完全可以看做是一个视角变换，并且在前文的基础上增加了一个键盘输入的功能，由键盘输入来控制相机的旋转。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="opengles3.0--旋转矩阵，摄像机">
+<meta property="og:url" content="http://yoursite.com/2016/04/06/opengles/opengles3-5/index.html">
+<meta property="og:site_name" content="游 记">
+<meta property="og:description" content="这两天主要是学习了如何构建一个opengles的Camera,之前做过了矩阵变换，其实从camera的角度出发，物体的旋转完全可以看做是一个视角变换，并且在前文的基础上增加了一个键盘输入的功能，由键盘输入来控制相机的旋转。">
+<meta property="og:image" content="http://7xk4vw.com1.z0.glb.clouddn.com/camera.png">
+<meta property="og:updated_time" content="2016-10-23T13:13:45.065Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="opengles3.0--旋转矩阵，摄像机">
+<meta name="twitter:description" content="这两天主要是学习了如何构建一个opengles的Camera,之前做过了矩阵变换，其实从camera的角度出发，物体的旋转完全可以看做是一个视角变换，并且在前文的基础上增加了一个键盘输入的功能，由键盘输入来控制相机的旋转。">
+<meta name="twitter:image" content="http://7xk4vw.com1.z0.glb.clouddn.com/camera.png">
+
+<link rel="apple-touch-icon" href= "/apple-touch-icon.png">
+
+
+    <link rel="alternate" href="/atom.xml" title="游 记" type="application/atom+xml">
+
+
+
+    <link rel="shortcut icon" href="/favicon.png">
+
+
+
+    <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+
+
+
+    <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+
+
+
+    <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+    <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="/css/style.css">
+
+
+
+<link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+
+
+<title>opengles3.0--旋转矩阵，摄像机 | 游 记</title>
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+<script>
+    var yiliaConfig = {
+        fancybox: true,
+        animate: true,
+        isHome: false,
+        isPost: true,
+        isArchive: false,
+        isTag: false,
+        isCategory: false,
+        fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+        scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+        search: undefined
+    }
+</script>
+
+
+    <script> yiliaConfig.jquery_ui = [false]; </script>
+
+
+
+    <script> yiliaConfig.rootUrl = "\/";</script>
+
+
+
+
+
+
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.png" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Tobias</a></h1>
+        </hgroup>
+
+        
+
+        
+
+
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        <li>友情链接</li>
+                        
+                        
+                        <li>关于我</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/categories/opengles/">OpenGLes3.0</a></li>
+                        
+                            <li><a href="/categories/hexo笔记/">hexo笔   记</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" href="/#tubiao8926@163.com" title="Email"></a>
+                            
+                                <a class="fa 新浪微博" href="http://weibo.com/flytobias" title="新浪微博"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/camera/">camera</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/">hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/opengles/">opengles</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/themes/">themes</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vs2013/">vs2013</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/入门/">入门</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/初始化/">初始化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片加载/">图片加载</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/矩阵变换/">矩阵变换</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/纹理/">纹理</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/输入/">输入</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/配置/">配置</a></li></ul>
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://hexo.io">Hexo</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="https://pages.github.com/">GitHub</a>
+                    
+                      <a class="main-nav-link switch-friends-link" href="http://moxfive.xyz/">MOxFIVE</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-aboutme">专注于前端</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Tobias</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.png" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Tobias</a></h1>
+            </hgroup>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/categories/opengles/">OpenGLes3.0</a></li>
+                
+                    <li><a href="/categories/hexo笔记/">hexo笔   记</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" target="_blank" href="/#tubiao8926@163.com" title="Email"></a>
+                            
+                                <a class="fa 新浪微博" target="_blank" href="http://weibo.com/flytobias" title="新浪微博"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
+</nav>
+      <div class="body-wrap"><article id="post-opengles/opengles3-5" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/04/06/opengles/opengles3-5/" class="article-date">
+      <time datetime="2016-04-05T16:00:00.000Z" itemprop="datePublished">2016-04-06</time>
+</a>
+
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      opengles3.0--旋转矩阵，摄像机
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/opengles/">opengles</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/camera/">camera</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/opengles/">opengles</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/矩阵变换/">矩阵变换</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/输入/">输入</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h6 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h6><p>这两天主要是学习了如何构建一个opengles的Camera,之前做过了矩阵变换，其实从camera的角度出发，物体的旋转完全可以看做是一个视角变换，并且在前文的基础上增加了一个键盘输入的功能，由键盘输入来控制相机的旋转。</p>
+<p>此部分分为三部分来讲：</p>
+<ul>
+<li>第一部分就是3D基础变换部分的实现，3D数学理论这里就不说了，有兴趣可以自己看看相关方面的书籍。</li>
+<li>第二部分就是简单的camera实现，并实现简单的旋转，移动等功能。</li>
+<li>第三部分是无关紧要的输入部分，为后面控制镜头移动测试，也为后面的变换做准备</li>
+</ul>
+<p>首先是3D方面的函数vector3,包含了vec3的基础部分，包括翻转，初始化等操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div></pre></td><td class="code"><pre><div class="line">#ifndef VEC3_H</div><div class="line">#define VEC3_H</div><div class="line">#include &lt;math.h&gt;</div><div class="line"></div><div class="line">class Point3</div><div class="line">&#123;</div><div class="line">public:</div><div class="line">    float x, y, z;</div><div class="line">    void set(float dx, float dy, float dz)</div><div class="line">    &#123;</div><div class="line">        x = dx; y = dy, z = dz;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    void set(Point3 &amp;p)</div><div class="line">    &#123;</div><div class="line">        x = p.x;</div><div class="line">        y = p.y;</div><div class="line">        z = p.z;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    Point3(float xx, float yy, float zz)</div><div class="line">    &#123;</div><div class="line">        x = xx, y = yy, z = zz;</div><div class="line">    &#125;</div><div class="line">    Point3()</div><div class="line">    &#123;</div><div class="line">        x = y = z = 0;</div><div class="line">    &#125;</div><div class="line">    void buid4tuple(float v[])</div><div class="line">    &#123;</div><div class="line">        v[0] = x, v[1] = y, v[2] = z, v[3] = 1.0f;</div><div class="line">    &#125;</div><div class="line">&#125;;</div><div class="line"></div><div class="line">class Vector3</div><div class="line">&#123;</div><div class="line">public:</div><div class="line">    float x, y, z;</div><div class="line">    void set(float dx, float dy, float dz)</div><div class="line">    &#123;</div><div class="line">        x = dx; y = dy; z = dz;</div><div class="line">    &#125;</div><div class="line">    void set(Vector3&amp; v)</div><div class="line">    &#123;</div><div class="line">        x = v.x; y = v.y; z = v.z;</div><div class="line">    &#125;</div><div class="line">    void flip()</div><div class="line">    &#123;</div><div class="line">        x = -x; y = -y; z = -z;</div><div class="line">    &#125;</div><div class="line">    void setDiff(Point3&amp; a, Point3&amp; b)</div><div class="line">    &#123;</div><div class="line">        x = a.x - b.x; y = a.y - b.y; z = a.z - b.z;</div><div class="line">    &#125;</div><div class="line">    void normalize()</div><div class="line">    &#123;</div><div class="line">        float base = pow(x, 2) + pow(y, 2) + pow(z, 2);</div><div class="line">        x = x / pow(base, 0.5f);</div><div class="line">        y = y / pow(base, 0.5f);</div><div class="line">        z = z / pow(base, 0.5f);</div><div class="line">    &#125;</div><div class="line">    Vector3(float xx, float yy, float zz)</div><div class="line">    &#123;</div><div class="line">        x = xx; y = yy; z = zz;</div><div class="line">    &#125;</div><div class="line">    Vector3(Vector3 &amp;v)</div><div class="line">    &#123;</div><div class="line">        x = v.x; y = v.y; z = v.z;</div><div class="line">    &#125;</div><div class="line">    Vector3()</div><div class="line">    &#123;</div><div class="line">        x = 0; y = 0; z = 0;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    Vector3 cross(Vector3 b)</div><div class="line">    &#123;</div><div class="line">        float x1, y1, z1;</div><div class="line">        x1 = y*b.z - z*b.y;</div><div class="line">        y1 = z*b.x - x*b.z;</div><div class="line">        z1 = x*b.y - y*b.x;</div><div class="line">        Vector3 c(x1, y1, z1);</div><div class="line">        return c;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    float dot(Vector3 b)</div><div class="line">    &#123;</div><div class="line">        float d = x*b.x + y*b.y + z*b.z;</div><div class="line">        return d;</div><div class="line">    &#125;</div><div class="line">&#125;;</div><div class="line"></div><div class="line">#endif</div></pre></td></tr></table></figure>
+<p>第二部分：就是camera的实现，首先是camera实现所需要的基本参数，eye，look以及up以及分别提取三个分量n,u,v</p>
+<ul>
+<li>eye    是摄像机在camera中的位置 </li>
+<li>look 摄像机看向的方向点</li>
+<li>up：制定的向上的方向<br>在确定了以上三个分量之后，就可以计算初初始的u,v,n分量，以此来实现相机的旋转和偏移操作。</li>
+</ul>
+<p>首先是初始化的计算：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">/* 设置摄像机的位置,朝向和向上向量 */</div><div class="line">void setCamera(float eyeX, float eyeY, float eyeZ,</div><div class="line">    float lookX, float lookY, float lookZ,</div><div class="line">    float upX, float upY, float upZ)</div><div class="line">&#123;</div><div class="line">    /* 构造向量 */</div><div class="line">    eye.set(eyeX, eyeY, eyeZ);</div><div class="line">    look.set(lookX, lookY, lookZ);</div><div class="line">    up.set(upX, upY, upZ);</div><div class="line">    Vector3 upvec(up.x - eye.x, up.y - eye.y, up.z - eye.z);</div><div class="line"></div><div class="line">    /* 计算n、u、v并归一化*/</div><div class="line">    n.set(eye.x - look.x, eye.y - look.y, eye.z - look.z);</div><div class="line">    u.set(upvec.cross(n).x, upvec.cross(n).y, upvec.cross(n).z);</div><div class="line">    v.set(n.cross(u).x, n.cross(u).y, n.cross(u).z);</div><div class="line"></div><div class="line">    u.normalize();</div><div class="line">    v.normalize();</div><div class="line">    n.normalize();</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>接下来是实现各种变换效果<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line">//roll对应的是翻滚角</div><div class="line">//yaw对应的是偏航角</div><div class="line">//pitch对应的是俯仰角</div><div class="line">//slide对应的是偏移操作</div><div class="line">/* 摄像机绕n、v、u轴旋转的计算函数*/</div><div class="line">void roll(float angle)</div><div class="line">&#123;</div><div class="line">    float cs = cos(angle*3.14159265f / 180);</div><div class="line">    float sn = sin(angle*3.14159265f / 180);</div><div class="line">    Vector3 t(u);</div><div class="line">    Vector3 s(v);</div><div class="line">    u.set(cs*t.x - sn*s.x, cs*t.y - sn*s.y, cs*t.z - sn*s.z);</div><div class="line">    v.set(sn*t.x + cs*s.x, sn*t.y + cs*s.y, sn*t.z + cs*s.z);</div><div class="line">&#125;</div><div class="line"></div><div class="line">void yaw(float angle)</div><div class="line">&#123;</div><div class="line">    float cs = cos(angle*3.14159265f / 180);</div><div class="line">    float sn = sin(angle*3.14159265f / 180);</div><div class="line">    Vector3 t(n);</div><div class="line">    Vector3 s(u);</div><div class="line">    n.set(cs*t.x - sn*s.x, cs*t.y - sn*s.y, cs*t.z - sn*s.z);</div><div class="line">    u.set(sn*t.x + cs*s.x, sn*t.y + cs*s.y, sn*t.z + cs*s.z);</div><div class="line">&#125;</div><div class="line"></div><div class="line">void pitch(float angle)</div><div class="line">&#123;</div><div class="line">    float cs = cos(angle*3.14159265f / 180);</div><div class="line">    float sn = sin(angle*3.14159265f / 180);</div><div class="line">    Vector3 t(v);</div><div class="line">    Vector3 s(n);</div><div class="line">    v.set(cs*t.x - sn*s.x, cs*t.y - sn*s.y, cs*t.z - sn*s.z);</div><div class="line">    n.set(sn*t.x + cs*s.x, sn*t.y + cs*s.y, sn*t.z + cs*s.z);</div><div class="line">&#125;</div><div class="line">/* 摄像机绕三个轴平移的计算函数*/</div><div class="line"></div><div class="line">void slide(float du, float dv, float dn)</div><div class="line">&#123;</div><div class="line">    eye.x += du*u.x + dv*v.x + dn*n.x;</div><div class="line">    eye.y += du*u.y + dv*v.y + dn*n.y;</div><div class="line">    eye.z += du*u.z + dv*v.z + dn*n.z;</div><div class="line">    look.x += du*u.x + dv*v.x + dn*n.x;</div><div class="line">    look.y += du*u.y + dv*v.y + dn*n.y;</div><div class="line">    look.z += du*u.z + dv*v.z + dn*n.z;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>最后就是modelViewMatrix的计算：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">/* 计算变换后的视点矩阵*/</div><div class="line">Matrix getModelViewMatrix()</div><div class="line">&#123;</div><div class="line">    Vector3 eVec(eye.x, eye.y, eye.z);</div><div class="line">    Matrix m;</div><div class="line">    m.m[0][0] = u.x; m.m[1][0] = u.y; m.m[2][0] = u.z; m.m[3][0] = -eVec.dot(u);</div><div class="line">    m.m[0][1] = v.x; m.m[1][1] = v.y; m.m[2][1] = v.z; m.m[3][1] = -eVec.dot(v);</div><div class="line">    m.m[0][2] = n.x; m.m[1][2] = n.y; m.m[2][2] = n.z; m.m[3][2] = -eVec.dot(n);</div><div class="line">    m.m[0][3] = 0.0f;  m.m[1][3] = 0.0f;  m.m[2][3] = 0.0f;  m.m[3][3] = 1.0f;</div><div class="line">    return m;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>第三部分是输入部分：<br>该部分主要是为了测试，同时为后续的工作做准备，本来单独写，但是与主题不太符合，因此就直接写在这里了，也可直接略过<br>首先是键盘事件的监听，简单来说就是在cell_win_app.h的回调消息中添加键盘事件，其中的case WM_KEYDOWN与case WM_KEYUP就是对键盘事件的分发：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line">static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)</div><div class="line">&#123;</div><div class="line">    Input *pInput=Input::getInstance();</div><div class="line">    switch (message)</div><div class="line">    &#123;</div><div class="line">        /*</div><div class="line">        Here we are handling 2 system messages: screen saving and monitor power.</div><div class="line">        They are especially relevent on mobile devices.</div><div class="line">        */</div><div class="line">    case WM_SYSCOMMAND:</div><div class="line">    &#123;</div><div class="line">                          switch (wParam)</div><div class="line">                          &#123;</div><div class="line">                          case SC_SCREENSAVE:                    // Screensaver trying to start ?</div><div class="line">                          case SC_MONITORPOWER:                // Monitor trying to enter powersave ?</div><div class="line">                              return 0;                            // Prevent this from happening</div><div class="line">                          &#125;</div><div class="line">                          break;</div><div class="line">    &#125;</div><div class="line">        // Handles the close message when a user clicks the quit icon of the window</div><div class="line">    case WM_CLOSE:</div><div class="line">        g_bDemoDone = true;</div><div class="line">        PostQuitMessage(0);</div><div class="line">        return 1;</div><div class="line">    case WM_KEYDOWN:</div><div class="line">        pInput-&gt;getInputDownStatus(wParam);</div><div class="line">        break;</div><div class="line">    case WM_KEYUP:</div><div class="line">        pInput-&gt;getInputUpStatus(wParam);</div><div class="line">        break;</div><div class="line">    default:</div><div class="line">        break;</div><div class="line">    &#125;</div><div class="line">    // Calls the default window procedure for messages we did not handle</div><div class="line">    return DefWindowProc(hWnd, message, wParam, lParam);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>其次就是设置一个单例input,用来处理该窗口的所有处理操作：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line">class Input&#123;</div><div class="line">private:</div><div class="line">    Input()&#123; moveUp = false, moveDown = false, leftRaw = false, rightRaw = false; &#125;;</div><div class="line">public:</div><div class="line">    bool moveUp;</div><div class="line">    bool moveDown;</div><div class="line">    bool leftRaw;</div><div class="line">    bool rightRaw;</div><div class="line">    static Input* getInstance()</div><div class="line">    &#123;</div><div class="line">        static Input *instance=new Input();</div><div class="line">        return instance;</div><div class="line">    &#125;</div><div class="line">    void getInputDownStatus(char wParam)&#123;</div><div class="line">        switch (wParam)</div><div class="line">        &#123;</div><div class="line">        case &apos;W&apos;:moveUp = true; break;</div><div class="line">        case &apos;S&apos;:moveDown = true; break;</div><div class="line">        case&apos;A&apos;:leftRaw = true; break;</div><div class="line">        case &apos;D&apos;:rightRaw=true; break;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    void getInputUpStatus(char wParam)</div><div class="line">    &#123;</div><div class="line">        switch (wParam)</div><div class="line">        &#123;</div><div class="line">        case &apos;W&apos;:moveUp = false; break;</div><div class="line">        case &apos;S&apos;:moveDown = false; break;</div><div class="line">        case&apos;A&apos;:leftRaw = false; break;</div><div class="line">        case &apos;D&apos;:rightRaw = false; break;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<h4 id="附录代码"><a href="#附录代码" class="headerlink" title="附录代码"></a>附录代码</h4><h6 id="headers-h"><a href="#headers-h" class="headerlink" title="headers.h"></a>headers.h</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">#ifndef HEADER_H</div><div class="line">    #define HEADER_H</div><div class="line">    #include &lt;stdio.h&gt;</div><div class="line">    #include &lt;windows.h&gt;</div><div class="line">    #include &lt;tchar.h&gt;</div><div class="line"></div><div class="line">    #include &quot;EGL/egl.h&quot;</div><div class="line">    #include &lt;GLES3/gl3.h&gt;</div><div class="line"></div><div class="line"></div><div class="line">    #include &quot;input.h&quot;</div><div class="line">#endif</div></pre></td></tr></table></figure>
+<h6 id="cell-win-app-h"><a href="#cell-win-app-h" class="headerlink" title="cell_win_app.h"></a>cell_win_app.h</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line">static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)</div><div class="line">&#123;</div><div class="line">    Input *pInput=Input::getInstance();</div><div class="line">    switch (message)</div><div class="line">    &#123;</div><div class="line">        /*</div><div class="line">        Here we are handling 2 system messages: screen saving and monitor power.</div><div class="line">        They are especially relevent on mobile devices.</div><div class="line">        */</div><div class="line">    case WM_SYSCOMMAND:</div><div class="line">    &#123;</div><div class="line">                          switch (wParam)</div><div class="line">                          &#123;</div><div class="line">                          case SC_SCREENSAVE:                    // Screensaver trying to start ?</div><div class="line">                          case SC_MONITORPOWER:                // Monitor trying to enter powersave ?</div><div class="line">                              return 0;                            // Prevent this from happening</div><div class="line">                          &#125;</div><div class="line">                          break;</div><div class="line">    &#125;</div><div class="line">        // Handles the close message when a user clicks the quit icon of the window</div><div class="line">    case WM_CLOSE:</div><div class="line">        g_bDemoDone = true;</div><div class="line">        PostQuitMessage(0);</div><div class="line">        return 1;</div><div class="line">    case WM_KEYDOWN:</div><div class="line">        pInput-&gt;getInputDownStatus(wParam);</div><div class="line">        break;</div><div class="line">    case WM_KEYUP:</div><div class="line">        pInput-&gt;getInputUpStatus(wParam);</div><div class="line">        break;</div><div class="line">    default:</div><div class="line">        break;</div><div class="line">    &#125;</div><div class="line">    // Calls the default window procedure for messages we did not handle</div><div class="line">    return DefWindowProc(hWnd, message, wParam, lParam);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h6 id="vector-h"><a href="#vector-h" class="headerlink" title="vector.h"></a>vector.h</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div></pre></td><td class="code"><pre><div class="line">#ifndef VEC3_H</div><div class="line">#define VEC3_H</div><div class="line">#include &lt;math.h&gt;</div><div class="line"></div><div class="line">class Point3</div><div class="line">&#123;</div><div class="line">public:</div><div class="line">    float x, y, z;</div><div class="line">    void set(float dx, float dy, float dz)</div><div class="line">    &#123;</div><div class="line">        x = dx; y = dy, z = dz;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    void set(Point3 &amp;p)</div><div class="line">    &#123;</div><div class="line">        x = p.x;</div><div class="line">        y = p.y;</div><div class="line">        z = p.z;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    Point3(float xx, float yy, float zz)</div><div class="line">    &#123;</div><div class="line">        x = xx, y = yy, z = zz;</div><div class="line">    &#125;</div><div class="line">    Point3()</div><div class="line">    &#123;</div><div class="line">        x = y = z = 0;</div><div class="line">    &#125;</div><div class="line">    void buid4tuple(float v[])</div><div class="line">    &#123;</div><div class="line">        v[0] = x, v[1] = y, v[2] = z, v[3] = 1.0f;</div><div class="line">    &#125;</div><div class="line">&#125;;</div><div class="line"></div><div class="line">class Vector3</div><div class="line">&#123;</div><div class="line">public:</div><div class="line">    float x, y, z;</div><div class="line">    void set(float dx, float dy, float dz)</div><div class="line">    &#123;</div><div class="line">        x = dx; y = dy; z = dz;</div><div class="line">    &#125;</div><div class="line">    void set(Vector3&amp; v)</div><div class="line">    &#123;</div><div class="line">        x = v.x; y = v.y; z = v.z;</div><div class="line">    &#125;</div><div class="line">    void flip()</div><div class="line">    &#123;</div><div class="line">        x = -x; y = -y; z = -z;</div><div class="line">    &#125;</div><div class="line">    void setDiff(Point3&amp; a, Point3&amp; b)</div><div class="line">    &#123;</div><div class="line">        x = a.x - b.x; y = a.y - b.y; z = a.z - b.z;</div><div class="line">    &#125;</div><div class="line">    void normalize()</div><div class="line">    &#123;</div><div class="line">        float base = pow(x, 2) + pow(y, 2) + pow(z, 2);</div><div class="line">        x = x / pow(base, 0.5f);</div><div class="line">        y = y / pow(base, 0.5f);</div><div class="line">        z = z / pow(base, 0.5f);</div><div class="line">    &#125;</div><div class="line">    Vector3(float xx, float yy, float zz)</div><div class="line">    &#123;</div><div class="line">        x = xx; y = yy; z = zz;</div><div class="line">    &#125;</div><div class="line">    Vector3(Vector3 &amp;v)</div><div class="line">    &#123;</div><div class="line">        x = v.x; y = v.y; z = v.z;</div><div class="line">    &#125;</div><div class="line">    Vector3()</div><div class="line">    &#123;</div><div class="line">        x = 0; y = 0; z = 0;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    Vector3 cross(Vector3 b)</div><div class="line">    &#123;</div><div class="line">        float x1, y1, z1;</div><div class="line">        x1 = y*b.z - z*b.y;</div><div class="line">        y1 = z*b.x - x*b.z;</div><div class="line">        z1 = x*b.y - y*b.x;</div><div class="line">        Vector3 c(x1, y1, z1);</div><div class="line">        return c;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    float dot(Vector3 b)</div><div class="line">    &#123;</div><div class="line">        float d = x*b.x + y*b.y + z*b.z;</div><div class="line">        return d;</div><div class="line">    &#125;</div><div class="line">&#125;;</div><div class="line"></div><div class="line">#endif</div></pre></td></tr></table></figure>
+<h6 id="input-h"><a href="#input-h" class="headerlink" title="input.h"></a>input.h</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line">class Input&#123;</div><div class="line">private:</div><div class="line">    Input()&#123; moveUp = false, moveDown = false, leftRaw = false, rightRaw = false; &#125;;</div><div class="line">public:</div><div class="line">    bool moveUp;</div><div class="line">    bool moveDown;</div><div class="line">    bool leftRaw;</div><div class="line">    bool rightRaw;</div><div class="line">    static Input* getInstance()</div><div class="line">    &#123;</div><div class="line">        static Input *instance=new Input();</div><div class="line">        return instance;</div><div class="line">    &#125;</div><div class="line">    void getInputDownStatus(char wParam)&#123;</div><div class="line">        switch (wParam)</div><div class="line">        &#123;</div><div class="line">        case &apos;W&apos;:moveUp = true; break;</div><div class="line">        case &apos;S&apos;:moveDown = true; break;</div><div class="line">        case&apos;A&apos;:leftRaw = true; break;</div><div class="line">        case &apos;D&apos;:rightRaw=true; break;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    void getInputUpStatus(char wParam)</div><div class="line">    &#123;</div><div class="line">        switch (wParam)</div><div class="line">        &#123;</div><div class="line">        case &apos;W&apos;:moveUp = false; break;</div><div class="line">        case &apos;S&apos;:moveDown = false; break;</div><div class="line">        case&apos;A&apos;:leftRaw = false; break;</div><div class="line">        case &apos;D&apos;:rightRaw = false; break;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h6 id="main-cpp"><a href="#main-cpp" class="headerlink" title="main.cpp"></a>main.cpp</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div></pre></td><td class="code"><pre><div class="line">#include &quot;cell_win_app.h&quot;</div><div class="line"></div><div class="line">#include &quot;egl_win_app.h&quot;</div><div class="line"></div><div class="line">#include &quot;shader_loader.h&quot;</div><div class="line">#include &quot;camera.h&quot;</div><div class="line">#include &quot;buffer.h&quot;</div><div class="line">#include &quot;matrix.h&quot;</div><div class="line"></div><div class="line">int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE  hPrevInstance, LPSTR lpCmdLine, int nCmdShow)</div><div class="line">&#123;</div><div class="line">    CellWinApp cellWinApp;</div><div class="line">    HWND hWnd = cellWinApp.CreateWnd(TEXT(&quot;WinMain&quot;), TEXT(&quot;主窗口&quot;));</div><div class="line">    cellWinApp.DisplayWnd(hWnd);</div><div class="line">    //EGL variables</div><div class="line">    EGLConfig eglConfig = 0;</div><div class="line">    EGLContext eglContext = 0;</div><div class="line">    EGLDisplay eglDisplay = 0;</div><div class="line">    EGLSurface eglSurface = 0;</div><div class="line">    EGLNativeWindowType eglWindow = 0;</div><div class="line">    //创建相机并初始化</div><div class="line">    Input *pInput = Input::getInstance();</div><div class="line">    Camera camera = Camera();</div><div class="line">    camera.setCamera(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f);</div><div class="line">    // Fragment and vertex shaders code</div><div class="line">    // Fragment and vertex shaders code</div><div class="line">    char* pszFragShader =</div><div class="line">        &quot;#version 300 es \n&quot;</div><div class="line">        &quot;in  vec4 descolor;&quot;</div><div class="line">        &quot;void main (void)&quot;</div><div class="line">        &quot;&#123;&quot;</div><div class="line">        &quot;    gl_FragColor = descolor;&quot;</div><div class="line">        &quot;&#125;&quot;;</div><div class="line"></div><div class="line">    char* pszVertShader =</div><div class="line">        &quot;#version 300 es \n&quot;</div><div class="line">        &quot;layout(location = 0)attribute vec4  a_position;&quot;</div><div class="line">        &quot;layout(location = 1)attribute vec4  a_color;&quot;</div><div class="line">        &quot;uniform mediump mat4   modelViewMatrix;&quot;</div><div class="line">        &quot;out  vec4 descolor;&quot;</div><div class="line">        &quot;void main(void)&quot;</div><div class="line">        &quot;&#123;&quot;</div><div class="line">        &quot;   gl_Position =modelViewMatrix*a_position;&quot;</div><div class="line">        &quot;   descolor=a_color;&quot;</div><div class="line">        &quot;&#125;&quot;;</div><div class="line"></div><div class="line"></div><div class="line">    Matrix pfIdentity =</div><div class="line">    &#123;</div><div class="line">        1.0f, 0.0f, 0.0f, 0.0f,</div><div class="line">        0.0f, 1.0f, 0.0f, 0.0f,</div><div class="line">        0.0f, 0.0f, 1.0f, 0.0f,</div><div class="line">        0.0f, 0.0f, 0.0f, 1.0f,</div><div class="line">    &#125;;</div><div class="line">    eglWindow = hWnd;</div><div class="line"></div><div class="line">    HDC hDC = 0;</div><div class="line">    hDC = GetDC(hWnd);</div><div class="line">    if (!hDC)</div><div class="line">    &#123;</div><div class="line">        MessageBox(0, _T(&quot;Failed to create the device context&quot;), _T(&quot;Error&quot;), MB_OK | MB_ICONEXCLAMATION);</div><div class="line">        goto cleanup;</div><div class="line">    &#125;</div><div class="line">    if (!initializeWindow(eglWindow, eglDisplay, eglSurface))</div><div class="line">    &#123;</div><div class="line">        goto cleanup;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    //Draw something  with OpenGL ES</div><div class="line">    GLuint uiFragShader, uiVertShader;</div><div class="line">    GLuint uiProgramObject;</div><div class="line"></div><div class="line">    if (!loaderShader(eglWindow, pszFragShader, pszVertShader, uiFragShader, uiVertShader))</div><div class="line">    &#123;</div><div class="line">        goto cleanup;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (!createShaderProgram(eglWindow, uiProgramObject, uiFragShader, uiVertShader))</div><div class="line">    &#123;</div><div class="line">        goto cleanup;</div><div class="line">    &#125;</div><div class="line">    //Actually the create program</div><div class="line">    glUseProgram(uiProgramObject);</div><div class="line"></div><div class="line">    //Set the color </div><div class="line">    //the clours are passed per channel(red,green,blue,alpha) as float values from 0,1 to 1.0</div><div class="line">    glClearColor(0.6f, 0.8f, 1.0f, 1.0f);</div><div class="line"></div><div class="line">    //We&apos;re going to draw triangle to the screen so create a vertex buffer object for our triangle</div><div class="line">    GLuint ui32Vbo;</div><div class="line"></div><div class="line">    bindBuffer(&amp;ui32Vbo);</div><div class="line"></div><div class="line"></div><div class="line">    //bind the custon vertsx attribute &quot;my vertex&quot; to local Vertex_array</div><div class="line">    glBindAttribLocation(uiProgramObject, 0, &quot;a_position&quot;);</div><div class="line">    glBindAttribLocation(uiProgramObject, 1, &quot;a_color&quot;);</div><div class="line">    matrixScale(&amp;pfIdentity, 0.5, 0.5, 0.5);</div><div class="line">    //matrixTranslate(&amp;pfIdentity, 0.5f, 0.5f, 0.5f);</div><div class="line">    static float rotation = 0;</div><div class="line">    GLubyte indeice[36] = &#123; 0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 1, 7, 1, 6, 7, 2, 1, 7, 5, 4, 7, 6, 5, 7, 3, 2, 7, 4, 3 &#125;;</div><div class="line"></div><div class="line">    //Draws triangle for 800 frames</div><div class="line">    for (int i = 0; i &lt; 1600; i++)</div><div class="line">    &#123;</div><div class="line">        if (g_bDemoDone) break;</div><div class="line"></div><div class="line">        //Clears the color buffer</div><div class="line">        glClear(GL_COLOR_BUFFER_BIT);</div><div class="line">        if (!TestEGLError(hWnd, &quot;glClear&quot;))</div><div class="line">        &#123;</div><div class="line">            goto cleanup;</div><div class="line">        &#125;</div><div class="line">        int i32Location = glGetUniformLocation(uiProgramObject, &quot;modelViewMatrix&quot;);</div><div class="line"></div><div class="line">        //Then passes the matrix to that variable</div><div class="line">        //camera.roll(0.1f);</div><div class="line">        //camera.yaw(0.2f);</div><div class="line">        //camera.slide(0.01f, 0.00f, 0.01f);</div><div class="line">        if (pInput-&gt;leftRaw) camera.yaw(-0.3f);</div><div class="line">        if (pInput-&gt;rightRaw) camera.yaw(0.3f);</div><div class="line">        if (pInput-&gt;moveUp) camera.roll(-0.3f) ;</div><div class="line">        if (pInput-&gt;moveDown) camera.roll(0.3f);</div><div class="line">        pfIdentity=camera.getModelViewMatrix();</div><div class="line">        matrixScale(&amp;pfIdentity, 0.5f, 0.5f, 0.5f);</div><div class="line">        //matrixRotate(&amp;pfIdentity, 50, 1.0f, 1.0f, 1.0f);</div><div class="line">        glUniformMatrix4fv(i32Location, 1, GL_FALSE, (GLfloat *)pfIdentity.m);</div><div class="line"></div><div class="line">        glEnableVertexAttribArray(0);</div><div class="line">        glEnableVertexAttribArray(1);</div><div class="line">        //Setsthe vertex data to this attribute index</div><div class="line">        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), 0);</div><div class="line">        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLubyte *)(4 * sizeof(GLfloat)));</div><div class="line">        glDrawElements(GL_TRIANGLES, sizeof(indeice) / sizeof(GLubyte), GL_UNSIGNED_BYTE, indeice);</div><div class="line">        if (!TestEGLError(hWnd, &quot;glDrawArrays&quot;))</div><div class="line">        &#123;</div><div class="line">            goto cleanup;</div><div class="line">        &#125;</div><div class="line"></div><div class="line"></div><div class="line">        eglSwapBuffers(eglDisplay, eglSurface);</div><div class="line">        if (!TestEGLError(hWnd, &quot;eglSwapBuffers&quot;))</div><div class="line">        &#123;</div><div class="line">            goto cleanup;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        MSG msg;</div><div class="line">        PeekMessage(&amp;msg, hWnd, NULL, NULL, PM_REMOVE);</div><div class="line">        TranslateMessage(&amp;msg);</div><div class="line">        DispatchMessage(&amp;msg);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // free the OpenGL handlers for the program and the 2 shaders</div><div class="line">    glDeleteProgram(uiProgramObject);</div><div class="line">    glDeleteShader(uiFragShader);</div><div class="line">    glDeleteShader(uiVertShader);</div><div class="line"></div><div class="line">    //Delete the VBO as it is no longer needed</div><div class="line">    glDeleteBuffers(0, &amp;ui32Vbo);</div><div class="line"></div><div class="line">cleanup:</div><div class="line">    eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);</div><div class="line">    eglTerminate(eglDisplay);</div><div class="line"></div><div class="line">    // Release the device context</div><div class="line">    if (hDC) ReleaseDC(hWnd, hDC);</div><div class="line">    // Destroy the eglWindow</div><div class="line">    if (hWnd) DestroyWindow(hWnd);</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="结果图"><a href="#结果图" class="headerlink" title="结果图"></a>结果图</h4><p><img src="http://7xk4vw.com1.z0.glb.clouddn.com/camera.png" alt=""></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2016/04/06/opengles/opengles3-5/">opengles3.0--旋转矩阵，摄像机</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">Tobias</a></p>
+        <p><span>发布时间:</span>2016-04-06, 00:00:00</p>
+        <p><span>最后更新:</span>2016-10-23, 21:13:45</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2016/04/06/opengles/opengles3-5/" title="opengles3.0--旋转矩阵，摄像机">http://yoursite.com/2016/04/06/opengles/opengles3-5/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://yoursite.com/2016/04/06/opengles/opengles3-5/　　作者: Tobias" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+            <div id="article-nav-newer" class="article-nav-title">
+                <a href="/2016/05/10/opengles/opengles3-6/">
+                    Opengles3.0--opengles的vs2013环境配置与安装
+                </a>
+            </div>
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/03/18/opengles/opengles3-4/">
+                    opengles3.0--图形进阶，旋转的立方体
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+        <strong class="toc-title">文章目录</strong>
+        
+            <ol class="toc"><li class="toc-item toc-level-6"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#附录代码"><span class="toc-number"></span> <span class="toc-text">附录代码</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#headers-h"><span class="toc-number">1.</span> <span class="toc-text">headers.h</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#cell-win-app-h"><span class="toc-number">2.</span> <span class="toc-text">cell_win_app.h</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#vector-h"><span class="toc-number">3.</span> <span class="toc-text">vector.h</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#input-h"><span class="toc-number">4.</span> <span class="toc-text">input.h</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#main-cpp"><span class="toc-number">5.</span> <span class="toc-text">main.cpp</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#结果图"><span class="toc-number"></span> <span class="toc-text">结果图</span></a>
+        
+    </div>
+    <style>
+        .left-col .switch-btn,
+        .left-col .switch-area {
+            display: none;
+        }
+        .toc-level-3 i,
+        .toc-level-3 ol {
+            display: none !important;
+        }
+    </style>
+
+    <input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
+
+    <script>
+        yiliaConfig.toc = ["隐藏目录", "显示目录", !!"false"];
+    </script>
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"opengles3.0--旋转矩阵，摄像机　| 游 记　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/2016/05/10/opengles/opengles3-6/" title="上一篇: Opengles3.0--opengles的vs2013环境配置与安装">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/03/18/opengles/opengles3-4/" title="下一篇: opengles3.0--图形进阶，旋转的立方体">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2016/05/10/hexo/hexo-change-themes/">Hexo—更换主题</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/10/hexo/hexo-start/">Hexo—静态博客搭建</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/10/opengles/opengles3-6/">Opengles3.0--opengles的vs2013环境配置与安装</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/04/06/opengles/opengles3-5/">opengles3.0--旋转矩阵，摄像机</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/03/18/opengles/opengles3-4/">opengles3.0--图形进阶，旋转的立方体</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/03/10/opengles/opengles3-3/">Opengles3.0--helloTriangle,一开新的开始</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/02/15/opengles/opengles3-2/">Opengles3.0--opengles的vs2013环境配置与安装</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/02/15/opengles/opengles3-1/">Opengles3.0--opengles的vs2013环境配置与安装</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2016 Tobias
+            </div>
+            <div class="footer-right">
+            <p>Email: tubiao8926@gmail.com</p>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" title="本站到访数"><i class="fa fa-user" aria-hidden="true"></i><span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>| </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit"  title="本页阅读量"><i class="fa fa-eye animated infinite pulse" aria-hidden="true"></i><span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var iPad = window.navigator.userAgent.indexOf('iPad');
+            if (iPad > -1 || $(".left-col").css("display") === "none") {
+                var bgColorList = ["#9db3f4", "#414141", "#e5a859", "#f5dfc6", "#c084a0", "#847e72", "#cd8390", "#996731"];
+                var bgColor = Math.ceil(Math.random() * (bgColorList.length - 1));
+                $("body").css({"background-color": bgColorList[bgColor], "background-size": "cover"});
+            }
+            else {
+                var backgroundnum = 5;
+                var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+                $("body").css({"background": backgroundimg, "background-attachment": "fixed", "background-size": "cover"});
+            }
+        })
+    </script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" onclick="load$hide();" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    // Open in New Window
+    
+        var oOpenInNew = {
+            
+            
+            
+            
+            
+            
+             archives: ".archive-article-title", 
+             miniArchives: "a.post-list-link", 
+            
+             friends: "#js-friends a", 
+             socail: ".social a" 
+        }
+        for (var x in oOpenInNew) {
+            $(oOpenInNew[x]).attr("target", "_blank");
+        }
+    
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>
